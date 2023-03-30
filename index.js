@@ -239,4 +239,160 @@ quit = async () => {
   db.end();
 };
 
+updateEmployeeManager = async () => {
+  const [employees] = await db
+    .promise()
+    .query(
+      `SELECT CONCAT(first_name," ", last_name) AS name, id AS value FROM employee;`
+    );
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "employee",
+        message: "Which employee would you like to update?",
+        choices: employees,
+      },
+      {
+        type: "list",
+        name: "manager_id",
+        message: "Who is their new manager?",
+        choices: employees,
+      },
+    ])
+    .then((data) => {
+      db.query(
+        `UPDATE employee SET manager_id = ${data.manager_id} WHERE id = ${data.employee};`,
+        (err, res) => {
+          if (err) throw err;
+          init();
+        }
+      );
+    });
+};
+
+viewEmployeesByManager = async () => {
+  const [employees] = await db
+    .promise()
+    .query(
+      "SELECT CONCAT(first_name, ' ', last_name) AS name, id AS value FROM employee;"
+    );
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "manager_id",
+        message: "Which manager's employees would you like to view?",
+        // selects manager_id in schema because in the db.query above we select id AS value
+        choices: employees,
+      },
+    ])
+    .then((data) => {
+      db.query(
+        `SELECT employee.id, CONCAT(employee.first_name, ' ', employee.last_name) AS Employee, role.title AS Role, department.name AS Department, CONCAT(manager.first_name, ' ', manager.last_name) AS manager FROM employee LEFT JOIN role ON role.id = employee.role_id LEFT JOIN department ON department.id = role.department_id LEFT JOIN employee manager ON manager.id = employee.manager_id WHERE employee.manager_id = ${data.manager_id};`,
+        (err, res) => {
+          if (err) throw err;
+          console.table(res);
+          init();
+        }
+      );
+    });
+};
+
+viewEmployeesByDepartment = async () => {
+  const [departments] = await db
+    .promise()
+    .query("SELECT name, id AS value FROM department;");
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "department_id",
+        message: "What department's employees would you like to see?",
+        choices: departments,
+      },
+    ])
+    .then((data) => {
+      db.query(
+        `SELECT * FROM employee LEFT JOIN role ON employee.role_id = role.id LEFT JOIN department ON role.department_id = department.id WHERE department.id = ${data.department_id};`,
+        (err, res) => {
+          if (err) throw err;
+          console.table(res);
+          init();
+        }
+      );
+    });
+};
+
+deleteDepartment = async () => {
+  const [departments] = await db
+    .promise()
+    .query("SELECT name, id AS value FROM department;");
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "department_id",
+        message: "Which department would you like to delete?",
+        choices: departments,
+      },
+    ])
+    .then((data) => {
+      db.query(
+        `DELETE FROM department WHERE id = ${data.department_id};`,
+        (err, res) => {
+          if (err) throw err;
+          init();
+        }
+      );
+    });
+};
+
+deleteRole = async () => {
+  const [roles] = await db
+    .promise()
+    .query("SELECT title AS name, id AS value FROM role;");
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "role_id",
+        message: "Which role would you like to delete?",
+        choices: roles,
+      },
+    ])
+    .then((data) => {
+      db.query(`DELETE FROM role WHERE id = ${data.role_id};`, (err, res) => {
+        if (err) throw err;
+        init();
+      });
+    });
+};
+
+deleteEmployee = async () => {
+  const [employees] = await db
+    .promise()
+    .query(
+      `SELECT CONCAT(first_name," ", last_name) AS name, id AS value FROM employee;`
+    );
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "employee_id",
+        message: "Which employee would you like to delete?",
+        choices: employees,
+      },
+    ])
+    .then((data) => {
+      db.query(
+        `DELETE FROM employee WHERE id = ${data.employee_id};`,
+        (err, res) => {
+          if (err) throw err;
+          init();
+        }
+      );
+    });
+};
+
 init();

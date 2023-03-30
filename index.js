@@ -23,7 +23,6 @@ const init = () => {
           "Delete Department",
           "Delete Role",
           "Delete Employee",
-          "View Department Budgets",
         ],
       },
     ])

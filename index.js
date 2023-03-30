@@ -89,4 +89,154 @@ viewAllEmployees = () => {
   );
 };
 
+addEmployee = async () => {
+  const [roles] = await db
+    .promise()
+    .query("SELECT title AS name, id AS value FROM role;");
+  const [employees] = await db
+    .promise()
+    .query(
+      "SELECT CONCAT(first_name, ' ', last_name) AS name, id AS value FROM employee;"
+    );
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "first_name",
+        message: "What is the employee's first name?",
+      },
+      {
+        type: "input",
+        name: "last_name",
+        message: "What is the employee's last name?",
+      },
+      {
+        type: "list",
+        name: "role_id",
+        message: "What is the employee's role?",
+        choices: roles,
+      },
+      {
+        type: "list",
+        name: "manager_id",
+        message: "Who is the employee's manager?",
+        choices: employees,
+      },
+    ])
+    .then((data) => {
+      db.promise().query("INSERT INTO employee SET ?;", [data]).then(init);
+    });
+};
+
+updateRole = async () => {
+  const [roles] = await db
+    .promise()
+    .query("SELECT title AS name, id AS value FROM role;");
+  const [employees] = await db
+    .promise()
+    .query(
+      `SELECT CONCAT(first_name," ", last_name) AS name, id AS value FROM employee;`
+    );
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "id",
+        message: "Who is the Employee that you would like to update?",
+        choices: employees,
+      },
+      {
+        type: "list",
+        name: "role_id",
+        message: "What is the new role?",
+        choices: roles,
+      },
+      {
+        type: "list",
+        name: "manager_id",
+        message: "Who is their manager?",
+        choices: employees,
+      },
+    ])
+    .then((data) => {
+      db.promise()
+        .query(
+          "UPDATE employee SET role_id = ?, manager_id = ? WHERE id = ?;",
+          [data.role_id, data.manager_id, data.id]
+        )
+        .then(init);
+    });
+};
+
+viewAllRoles = async () => {
+  db.query(
+    `SELECT role.id, role.title, role.salary, department.name AS department FROM role JOIN department ON role.department_id = department.id;`,
+    (err, res) => {
+      if (err) throw err;
+      console.table(res);
+      init();
+    }
+  );
+};
+
+addRole = async () => {
+  const [departments] = await db
+    .promise()
+    .query("SELECT name, id AS value FROM department;");
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "title",
+        message: "What is the name of the role?",
+      },
+      {
+        type: "number",
+        name: "salary",
+        message: "What is the salary for the role?",
+      },
+      {
+        type: "list",
+        name: "department_id",
+        message: "What department does this role belong to?",
+        choices: departments,
+      },
+    ])
+    .then((data) => {
+      db.promise().query("INSERT INTO role SET ?;", [data]).then(init);
+    });
+};
+
+viewAllDepartments = async () => {
+  db.query("SELECT * FROM department;", (err, res) => {
+    if (err) throw err;
+    console.table(res);
+    init();
+  });
+};
+
+addDepartment = async () => {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "name",
+        message: "What is the name of the department?",
+      },
+    ])
+    .then((data) => {
+      db.query(
+        `INSERT INTO department (name) VALUES ('${data.name}')`,
+        (err, res) => {
+          if (err) throw err;
+          init();
+        }
+      );
+    });
+};
+
+quit = async () => {
+  db.end();
+};
+
 init();
